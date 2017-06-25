@@ -22,11 +22,11 @@ SONG_END = pygame.USEREVENT + 1
 
 pygame.mixer.music.set_endevent(SONG_END)
 
-songs = ["/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/luisichopinscherzo.wav",
-         "/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/LoveDream.wav",
-         "/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/CohensMasterpiece.wav",
-         "/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/Monologue1.wav",
-         "/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/TheWinnerIs.wav"]
+songs = ["card-BMPS/luisichopinscherzo.wav",
+         "card-BMPS/LoveDream.wav",
+         "card-BMPS/CohensMasterpiece.wav",
+         "card-BMPS/Monologue1.wav",
+         "card-BMPS/TheWinnerIs.wav"]
 current_song = None
 #pygame.mixer.music.load("/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/dirtytalk.wav")
 #pygame.mixer.music.queue("/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/LoveDream.wav")
@@ -80,7 +80,7 @@ def card_string(cards):
         cardlink1 = 'd' + cardlink1
     else:
         cardlink1 = 'c' + cardlink1
-    cardlink1 = "/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/" + cardlink1 + ".bmp"
+    cardlink1 = "card-BMPS/" + cardlink1 + ".bmp"
     return cardlink1
 
 
@@ -120,6 +120,26 @@ def button(msg,x,y,w,h,ic,ac, action=None):
     textSurf, textRect = text_objects(msg, smallText)
     textRect.center = ( (x+(w/2)), (y+(h/2)) )
     gameDisplay.blit(textSurf, textRect)
+
+def slider(minimum, maximum, x, y, circlex, w, h, r, color):
+    pygame.draw.rect(gameDisplay, color, (x, y, w, h))
+    mouse = pygame.mouse.get_pos()
+    click = pygame.mouse.get_pressed()
+    if x+w > mouse[0] > x and y+h > mouse[1] > y and click[0] == 1:
+        circlex = mouse[0]
+
+    
+    pygame.draw.circle(gameDisplay, color, (circlex, y + (h/2)), r)
+    betamount = (maximum - minimum) * (circlex - x) / w + minimum
+    if circlex - x < 3:
+        betamount = minimum
+    if circlex - x > w - 3:
+        betamount = maximum
+    smallText = pygame.font.Font("freesansbold.ttf",20)
+    textSurf, textRect = text_objects(str(betamount), smallText)
+    textRect.center = ( (circlex), (y+(h/2)) )
+    gameDisplay.blit(textSurf, textRect)
+    return circlex, betamount
 
 def card_animation(img, background, endx, y, speed=5):
     if type(img) != list:
@@ -339,6 +359,7 @@ def bettinground(firstround=False, playermove=False):
     thesession.secondplayer.potinvest = 0
     if firstround:
         thegame.previousbet = thesession.blindamount
+        thegame.lastbet = thesession.blindamount / 2
         if thesession.bblind:
             thesession.player1.potinvest = thesession.blindamount / 2
             thesession.secondplayer.potinvest =  thesession.blindamount
@@ -353,7 +374,7 @@ def bettinground(firstround=False, playermove=False):
 
 
 def turn_function(playermove=False):
-    global thesession, thegame, opponentmove
+    global thesession, thegame, opponentmove, betamount
     if thegame.turn == True:
         if thesession.secondplayer.status == False:
             return True
@@ -412,11 +433,11 @@ def turn_function(playermove=False):
             thesession.player1.call(thegame)
             opponentmove = "Call"
         if move == 2:
-            thesession.player1.raise1(thegame, 40, 40)
+            thesession.player1.raise1(thegame, 40, minimum_bet(thesession.blindamount, thegame.lastbet))
             opponentmove = "Raise"
             thesession.secondplayer.active = True
         if move == 0:
-            if thesession.player1.potinvest >= thegame.previousbet:
+            if thegame.lastbet <= 0:
                 thesession.player1.call(thegame)
                 opponentmove = "Call"
                 
@@ -442,7 +463,9 @@ def turn_function(playermove=False):
             if playermove == 2:
                 thesession.secondplayer.call(thegame)
             if playermove == 3:
-                thesession.secondplayer.raise1(thegame, 40, 40)
+                if betamount > thesession.player1.money:
+                    betamount = thesession.player1.money
+                thesession.secondplayer.raise1(thegame, betamount, minimum_bet(thesession.blindamount, thegame.lastbet))
                 thesession.player1.active = True
             if playermove == 1:
                 thesession.secondplayer.fold(thegame)
@@ -535,7 +558,7 @@ def place_chips():
     for x in range(total):
         gameDisplay.blit(chipimageside, (potstartx + 17*counterx, potstarty - 2*countery))
         countery +=1
-        if countery > 4:
+        if countery > 5:
             counterx += 1
             countery = 0
 
@@ -558,6 +581,7 @@ def toggle_music():
     
 thesession = session()
 thegame = game(thesession)
+betamount = thesession.blindamount
 reveal = False
 newgame = False
 wintimer = False
@@ -582,6 +606,8 @@ def main():
     play_adifferentsong()
     #thegame.secondplayer.print_hand()
     #thegame.flop()
+    circlex = 125
+    global betamount
     while not gameexit:
         
         for event in pygame.event.get():
@@ -662,7 +688,11 @@ def main():
             gameDisplay.blit(chipimagesmall, (480, 137))
 
         place_chips()
-        
+        minimum = minimum_bet(thesession.blindamount, thegame.previousbet)
+        maximum = thesession.secondplayer.money
+        if minimum > maximum:
+            minimum = maximum
+        circlex, betamount = slider(minimum, maximum, 75, 404, circlex, 125, 15, 15, green)
         if newgame or wintimer:
             winner = thegame.compare_score(thegame.player1, thegame.secondplayer)
             if thesession.player1.status == False:
