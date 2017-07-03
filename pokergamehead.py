@@ -75,16 +75,16 @@ class hand:
         twopair, pair = check_pairs(num)
 
         if straight > 0 and flush > 0:
-            #not 100% perfect, should work almost always
-            if flushnumbers[0] == straight:
+            #should work almost always
+            if flushnumbers[0] == straight and (sum(flushnumbers)/5 == flushnumbers[2]
+                and flushnumbers[4] == straight - 4):
                 self.handscore.type = 22
                 self.handscore.level = straight
                 self.handscore.high = 0
                 self.handscore.reserve = 0
                 self.handscore.last = 0
                 return
-            flushnumbers2 = flushnumbers[:5]
-            if sum(flushnumbers2)/5 == flushnumbers[2]:
+            if sum(flushnumbers)/5 == flushnumbers[2] and flushnumbers[4] == flushnumbers[0] - 4:
                 self.handscore.type = 22
                 self.handscore.level = flushnumbers[0]
                 self.handscore.high = 0
@@ -306,7 +306,7 @@ class game:
         
         self.player1 = hand()
         self.secondplayer = hand()
-    def start(self, session1, prin=False):
+    def start(self, session1, prin=False, human=False):
         if self.turn == True:
             transfer_money(self, session1.player1, session1.blindamount, True)
             session1.player1.potinvest += session1.blindamount
@@ -328,36 +328,12 @@ class game:
         self.secondplayer.get_card(self.thedeck)
         if prin:
             print "Pot:{0}   Player 1:{1}  Player 2:{2}".format(self.pot, session1.player1.money, session1.secondplayer.money)
-            self.player1.print_hand(),
-            print '  ',
+            if not human:
+                self.player1.print_hand(),
+                print '  ',
             self.secondplayer.print_hand()
             print '\n'
-    def start_human(self, session1, prin=False):
-        if self.turn == True:
-            transfer_money(self, session1.player1, session1.blindamount, True)
-            session1.player1.potinvest += session1.blindamount
-            
-            transfer_money(self, session1.secondplayer, session1.blindamount / 2, True)
-            session1.secondplayer.potinvest += math.floor(session1.blindamount / 2)
-            
-        if self.turn == False:
-            transfer_money(self, session1.player1, session1.blindamount / 2, True)
-            session1.player1.potinvest += math.floor(self.previousbet / 2)
-            transfer_money(self, session1.secondplayer, session1.blindamount, True)
-            session1.secondplayer.potinvest += session1.blindamount
-
-        
-        self.player1.get_card(self.thedeck)
-        self.player1.get_card(self.thedeck)
-        
-        self.secondplayer.get_card(self.thedeck)
-        self.secondplayer.get_card(self.thedeck)
-        if prin:
-            print "Pot:{0}   Player 1:{1}  Player 2:{2}".format(self.pot, session1.player1.money, session1.secondplayer.money)
-            #self.player1.print_hand(),
-            #print '  ',
-            self.secondplayer.print_hand()
-            print '\n'
+    
     def flop(self, prin=False):
         self.round += 1
         self.community.get_card(self.thedeck)
