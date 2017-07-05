@@ -441,25 +441,29 @@ class player:
                 transfer_money(game1, self, game1.previousbet - self.potinvest, True)
                 transfer_money(game1, self, bet, True)
                 game1.previousbet += bet
+                game1.lastbet = bet
                 game1.turn = not game1.turn
                 self.active = False
                 if prin:
                     print "raises", bet
-                return False
+                return bet
             else:
                 transfer_money(game1, self, game1.previousbet - self.potinvest, True)
                 game1.previousbet += self.money
+                bet = self.money
+                game1.lastbet = self.money
                 transfer_money(game1, self, self.money, True)
                 game1.turn = not game1.turn
                 self.active = False
                 self.allin = True
                 if prin:
                     print "raises All IN!"
-                return False
+                return bet
         self.raise1(game1, minimum, minimum)
         return False
     def call(self, game1, prin=False):
         #print "calls",
+        amount = 0
         if self.potinvest >= game1.previousbet:
             game1.turn = not game1.turn
             self.active = False
@@ -467,22 +471,24 @@ class player:
             game1.previousbet = self.potinvest
             if prin:            
                 print "checks"
-            return False
+            return amount
         self.previousmove = 1
         if game1.previousbet - self.potinvest < self.money:
             if prin:
                 print "calls", game1.previousbet - self.potinvest
+            amount = game1.previousbet  - self.potinvest
             transfer_money(game1, self, game1.previousbet - self.potinvest, True)
             game1.turn = not game1.turn
             self.active = False
-            return False
+            return amount
+        amount = self.money
         transfer_money(game1, self, self.money, True)
         game1.turn = not game1.turn
         self.active = False
         self.allin = True
         if prin:
             print "calls ALL IN!"
-        return False
+        return amount
     def fold(self, game1, prin=False):
         self.status = False
         self.active = False

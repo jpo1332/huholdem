@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+import os
+import tensorflow as tf
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import random
 import math
 import csv
 import ast
 import numpy as np
-import tensorflow as tf
 import sys
 import inspectcheckpoint
 

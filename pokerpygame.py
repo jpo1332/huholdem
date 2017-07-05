@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-
+import os
+import tensorflow as tf
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import pygame
+from pygame.locals import *
 import time
-import sys
 import copy
 #sys.path[0:0] = ['/Users/JackOHara/Desktop/code/Pythonprograms/Poker']
 from pokergamehead import *
@@ -10,11 +12,11 @@ from loadprobs import *
 from checkprobs import *
 from modelheader import *
 
-pygame.init()
 
+pygame.init()
 displayheight = 500
 displaywidth = 800
-gameDisplay = pygame.display.set_mode((displaywidth, displayheight))
+gameDisplay = pygame.display.set_mode((displaywidth, displayheight), pygame.RESIZABLE)
 pygame.display.set_caption('Head\'s Up Texas Holdem')
 
 
@@ -28,8 +30,8 @@ songs = ["card-BMPS/luisichopinscherzo.wav",
          "card-BMPS/Monologue1.wav",
          "card-BMPS/TheWinnerIs.wav"]
 current_song = None
-#pygame.mixer.music.load("/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/dirtytalk.wav")
-#pygame.mixer.music.queue("/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/LoveDream.wav")
+#pygame.mixer.music.load("card-BMPS/dirtytalk.wav")
+#pygame.mixer.music.queue("card-BMPS/LoveDream.wav")
 
 def play_adifferentsong():
     global current_song, songs
@@ -43,12 +45,15 @@ def play_adifferentsong():
 
 
 
-chipimage = pygame.image.load("/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/chip.png")
-chipimagesmall = pygame.image.load("/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/circle.png")
+chipimage = pygame.image.load("card-BMPS/chip.png")
+chipimagesmall = pygame.image.load("card-BMPS/circle.png")
 chipimagesmall = pygame.transform.scale(chipimagesmall, (10, 10))
 
-chipimageside = pygame.image.load("/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/chipside.png")
-chipimageside = pygame.transform.scale(chipimageside, (15, 3))
+try:
+    chipimageside = pygame.image.load("card-BMPS/chipside.png")
+    chipimageside = pygame.transform.scale(chipimageside, (15, 3))
+except:
+    pass
 
 pygame.display.set_icon(chipimage)
 clock = pygame.time.Clock()
@@ -58,10 +63,50 @@ white = (255,255,255)
 grey = (100, 100, 100)
 red = (255, 0, 0)
 green = (50, 255, 50)
-tableimg = pygame.image.load("/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/table.jpeg")
+tableimg = pygame.image.load("card-BMPS/table.jpeg")
 tableimg = pygame.transform.scale(tableimg, (800, 400))
-blankcard = pygame.image.load("/Users/JackOHara/Desktop/code/Pythonprograms/poker/card-BMPS/b2fv.bmp")
+blankcard = pygame.image.load("card-BMPS/b2fv.bmp")
+def rescale():
+    global displayheight, displaywidth
+    width = gameDisplay.get_width()
+    height = gameDisplay.get_height()
+    global xloc, yloc
+    counter = 0
+    for x in xloc:
+        xloc[counter] = int(x / 1.0 / displaywidth * width)
+        counter += 1
+    counter = 0
+    for y in yloc:
+        yloc[counter] = int(y / 1.0 / displayheight * height)
+        counter += 1
+    
+    
+    displayheight = height
+    displaywidth = width
+    global chipimage, chipimagesmall, chipimageside, tableimg, blankcard, cardimages
+    chipimagesmall = pygame.image.load("card-BMPS/circle.png")
+    chipimagesmall = pygame.transform.scale(chipimagesmall, (int(.0125 * width), int(.02 * height)))
 
+    chipimageside = pygame.image.load("card-BMPS/chipside.png")
+    chipimageside = pygame.transform.scale(chipimageside, (int(.01875 * width), int(.006 * height)))
+
+    tableimg = pygame.image.load("card-BMPS/table.jpeg")
+    tableimg = pygame.transform.scale(tableimg, (width, int(.8 * height)))
+
+    blankcard = pygame.image.load("card-BMPS/b2fv.bmp")
+    blankcard = pygame.transform.scale(blankcard, (int(.08875 * width), int(.192 * height)))
+
+    allcards = []
+    for x in range(4):
+        for y in range(2,15):
+            allcards.append(card(x,y))
+    cardimages = []
+    for x in allcards:
+        tempcard = pygame.image.load(card_string(x))
+        tempcard = pygame.transform.scale(tempcard, (int(.08875 * width), int(.192 * height)))
+        cardimages.append(tempcard)
+    cardimages.append(blankcard)
+    
 def card_to_index(card1):
     return (card1.number - 2) + (card1.cardsuit * 13)
 def card_string(cards):
@@ -100,7 +145,7 @@ def text_objects(text, font):
     return textSurface, textSurface.get_rect()
 
 def text_box(msg, x, y):
-    smallText = pygame.font.Font("freesansbold.ttf",15)
+    smallText = pygame.font.Font("freesansbold.ttf", int(.03 * displayheight))
     textSurf, textRect = text_objects(msg, smallText)
     textRect.center = ( (x, y) )
     gameDisplay.blit(textSurf, textRect)
@@ -116,7 +161,7 @@ def button(msg,x,y,w,h,ic,ac, action=None):
     else:
         pygame.draw.rect(gameDisplay, ic,(x,y,w,h))
 
-    smallText = pygame.font.Font("freesansbold.ttf",20)
+    smallText = pygame.font.Font("freesansbold.ttf",int(.04 * displayheight))
     textSurf, textRect = text_objects(msg, smallText)
     textRect.center = ( (x+(w/2)), (y+(h/2)) )
     gameDisplay.blit(textSurf, textRect)
@@ -135,7 +180,7 @@ def slider(minimum, maximum, x, y, circlex, w, h, r, color):
         betamount = minimum
     if circlex - x > w - 3:
         betamount = maximum
-    smallText = pygame.font.Font("freesansbold.ttf",20)
+    smallText = pygame.font.Font("freesansbold.ttf",int(.04 * displayheight))
     textSurf, textRect = text_objects(str(betamount), smallText)
     textRect.center = ( (circlex), (y+(h/2)) )
     gameDisplay.blit(textSurf, textRect)
@@ -177,15 +222,20 @@ def exit_intro():
     global intro
     intro = False
 def game_intro():
-
+    global gameDisplay
     while intro:
-        
         
         for event in pygame.event.get():
             #print(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+            if event.type == VIDEORESIZE:
+            # The main code that resizes the window:
+            # (recreate the window with the new size)
+                gameDisplay = pygame.display.set_mode((event.w, event.h),
+                                              pygame.RESIZABLE)
+                rescale()
                 
         gameDisplay.fill(white)
         largeText = pygame.font.Font('freesansbold.ttf',115)
@@ -193,7 +243,8 @@ def game_intro():
         TextRect.center = ((displaywidth/2),(displayheight/2))
         gameDisplay.blit(TextSurf, TextRect)
 
-        startbutton = button("Start", 325, 350, 125, 40, red, grey, exit_intro)
+        startbutton = button("Start", int(.40625 * displaywidth), int(
+            .7 * displayheight), int(.15625 * displaywidth), int(.08 * displayheight), red, grey, exit_intro)
         pygame.display.update()
         clock.tick(15)
         
@@ -222,7 +273,7 @@ def game_overscreen():
         TextRect.center = ((displaywidth/2),(displayheight/2))
         gameDisplay.blit(TextSurf, TextRect)
 
-        overbutton = button("Play Again", 325, 350, 125, 40, red, grey, exit_gameoverscreen)
+        overbutton = button("Play Again", xloc[0], yloc[0], xloc[1], yloc[1], red, grey, exit_gameoverscreen)
         pygame.display.update()
         clock.tick(15)
     game_over = False
@@ -313,8 +364,8 @@ def check_state(playermove=False):
                 img = [card_to_index(thegame.community.cards[0]),
                        card_to_index(thegame.community.cards[1]),
                        card_to_index(thegame.community.cards[2])]
-                endxs = [350, 400, 450]
-                endys = [165, 165, 165]
+                endxs = [xloc[2], xloc[3], xloc[4]]
+                endys = [yloc[2], yloc[3], yloc[4]]
                 card_animation(img, background, endxs, endys, speed=6)
             
             bettinground()
@@ -327,7 +378,7 @@ def check_state(playermove=False):
             thegame.river()
             if animation_on:
                 img = card_to_index(thegame.community.cards[3])
-                card_animation(img, background, 500, 165, speed=10)
+                card_animation(img, background, xloc[5], yloc[5], speed=10)
             bettinground()
             return
     elif thegame.round == 2:
@@ -338,7 +389,7 @@ def check_state(playermove=False):
             thegame.river()
             if animation_on:
                 img = card_to_index(thegame.community.cards[4])
-                card_animation(img, background, 550, 165, speed=20)
+                card_animation(img, background, xloc[6], yloc[6], speed=20)
             bettinground()
             return
     else:
@@ -355,6 +406,7 @@ def bettinground(firstround=False, playermove=False):
         return
     thegame.turn = thesession.bblind
     thegame.previousbet = 0
+    thegame.lastbet = 0
     thesession.player1.potinvest = 0
     thesession.secondplayer.potinvest = 0
     if firstround:
@@ -430,21 +482,25 @@ def turn_function(playermove=False):
             move, _ = check_prob(thegame.round, thegame, thegame.player1)
         #move = 1
         if move == 1:
-            thesession.player1.call(thegame)
-            opponentmove = "Call"
+            amount = thesession.player1.call(thegame)
+            if amount <= 0:               
+                opponentmove = opponent_animation("Checks")
+            else:
+                opponentmove = opponent_animation("Calls {0}".format(amount))
+            
         if move == 2:
-            thesession.player1.raise1(thegame, 40, minimum_bet(thesession.blindamount, thegame.lastbet))
-            opponentmove = "Raise"
+            amount = thesession.player1.raise1(thegame, 40, minimum_bet(thesession.blindamount, thegame.lastbet))
+            opponentmove = opponent_animation("Raises {0}".format(amount))
             thesession.secondplayer.active = True
         if move == 0:
-            if thegame.lastbet <= 0:
+            if thesession.player1.potinvest >= thegame.previousbet:
                 thesession.player1.call(thegame)
-                opponentmove = "Call"
+                opponentmove = opponent_animation("Checks")
                 
             else:
                 thesession.player1.fold(thegame)
-                opponentmove = "Fold"
-                
+                opponentmove = opponent_animation("Folds")
+        print(thegame.lastbet, opponentmove)
         return True
     if thegame.turn == False:
         if thesession.player1.status == False:
@@ -474,6 +530,18 @@ def turn_function(playermove=False):
             return
     return
 
+def opponent_animation(message):
+    '''
+    x = 610
+    y = 170
+    currenttime = pygame.time.get_ticks()
+    while pygame.time.get_ticks() - currenttime < 1000:
+        #gameDisplay.blit(background, (0,0))
+        text_box(message, x, y)
+        pygame.display.update()
+        clock.tick(30)
+    '''
+    return message
 def return_variables(session1, game1, players, rounds):
     _, probability = check_prob(rounds, game1, players)
     return [probability, game1.pot, game1.previousbet]
@@ -520,14 +588,14 @@ def show_score():
             msg = "Straight Flush: {0} High!".format(number_toface(x.level))
 
         if counter == 0:
-            text_box(msg, 455, 290)
+            text_box(msg, xloc[7], yloc[7])
         else:
-            text_box(msg, 455, 315)
+            text_box(msg, xloc[8], yloc[8])
         counter += 1
 
 def place_chips():
-    mystartx = 120
-    mystarty = 320
+    mystartx = xloc[9]
+    mystarty = yloc[9]
     counterx = 0
     countery = 0
     total = int(thesession.secondplayer.money / 20)
@@ -538,8 +606,8 @@ def place_chips():
             counterx += 1
             countery = 0
 
-    hisstartx = 610
-    hisstarty = 130
+    hisstartx = xloc[10]
+    hisstarty = yloc[10]
     counterx = 0
     countery = 0
     total = int(thesession.player1.money / 20)
@@ -550,8 +618,8 @@ def place_chips():
             counterx += 1
             countery = 0
 
-    potstartx = 280
-    potstarty = 200
+    potstartx = xloc[11]
+    potstarty = yloc[11]
     counterx = 0
     countery = 0
     total = int(thegame.pot / 20)
@@ -578,6 +646,18 @@ def toggle_music():
         pygame.mixer.music.unpause()
     music_on = not music_on
 
+xloc = [325, 125, 350, 400, 450, 500, 550, 455, 455, 120,
+        610, 280, 75, 125, 250, 125, 425, 125, 675, 75,
+        740, 50, 740, 50, 735, 50, 735, 50, 480, 520,
+        480, 520, 200, 290, 350, 145, 635, 35, 200, 200,
+        480, 75, 125, 250, 100, 250, 100, 250, 100, 480,
+        520, 200, 290, 200, 290]
+yloc = [350, 40, 165, 165, 165, 165, 165, 290, 315, 320,
+        130, 200, 425, 40, 425, 40, 425, 40, 430, 25,
+        18, 25, 18, 25, 380, 25, 380, 25, 40, 40,
+        40, 40, 274, 274, 165, 335, 90, 15, 200, 262,
+        137, 404, 15, 220, 40, 220, 40, 220, 40, 40,
+        40, 274, 274, 274, 274]
     
 thesession = session()
 thegame = game(thesession)
@@ -589,7 +669,7 @@ wintime = pygame.time.get_ticks()
 opponentmove = ""
 background = copy.copy(gameDisplay)
 def main():
-
+    global gameDisplay
     global gameexit
     global thesession
     global thegame
@@ -627,7 +707,7 @@ def main():
                         new_hand()
                     else:
                         time.sleep(.1)
-                        check_state()
+                        #check_state()
                         pygame.event.clear
                 if event.key == pygame.K_f:
                     use_call()
@@ -639,6 +719,12 @@ def main():
                     toggle_animation()
                 if event.key == pygame.K_p:
                     toggle_music()
+            if event.type == VIDEORESIZE:
+            # The main code that resizes the window:
+            # (recreate the window with the new size)
+                gameDisplay = pygame.display.set_mode((event.w, event.h),
+                                              pygame.RESIZABLE)
+                rescale()
 
                     
         gameDisplay.fill(white)
@@ -646,53 +732,53 @@ def main():
 
         
 
-        raisebutton = button("Raise", 75, 425, 125, 40, green, grey, use_raise)
-        callbutton = button("Call", 250, 425, 125, 40, green, grey, use_call)
-        foldbutton = button("Fold", 425, 425, 125, 40, green, grey, use_fold)
-        quitbutton = button("Quit", 675, 430, 75, 25, red, grey, use_quitbutton)
+        raisebutton = button("Raise", xloc[12], yloc[12], xloc[13], yloc[13], green, grey, use_raise)
+        callbutton = button("Call", xloc[14], yloc[14], xloc[15], yloc[15], green, grey, use_call)
+        foldbutton = button("Fold", xloc[16], yloc[16], xloc[17], yloc[17], green, grey, use_fold)
+        quitbutton = button("Quit", xloc[18], yloc[18], xloc[19], yloc[19], red, grey, use_quitbutton)
         if animation_on:
-            animebutton = button("ON", 740, 18, 50, 25, white, grey, toggle_animation)
+            animebutton = button("ON", xloc[20], yloc[20], xloc[21], yloc[21], white, grey, toggle_animation)
         else:
-            animebutton = button("OFF", 740, 18, 50, 25, white, grey, toggle_animation)
+            animebutton = button("OFF", xloc[22], yloc[22], xloc[23], yloc[23], white, grey, toggle_animation)
 
         if music_on:
-            musicbutton = button('M', 735, 380, 50, 25, white, grey, toggle_music)
+            musicbutton = button('M', xloc[24], yloc[24], xloc[25], yloc[25], white, grey, toggle_music)
         else:
-            musicbutton = button('O', 735, 380, 50, 25, red, grey, toggle_music)
+            musicbutton = button('O', xloc[26], yloc[26], xloc[27], yloc[27], red, grey, toggle_music)
 
             
         if not reveal:
-            carddisplay(blankcard, 480, 40)
-            carddisplay(blankcard, 520, 40)
+            carddisplay(blankcard, xloc[28], yloc[28])
+            carddisplay(blankcard, xloc[29], yloc[29])
         else:
-            carddisplay(cardimages[card_to_index(thegame.player1.cards[0])], 480, 40)
-            carddisplay(cardimages[card_to_index(thegame.player1.cards[1])], 520, 40)
+            carddisplay(cardimages[card_to_index(thegame.player1.cards[0])], xloc[30], yloc[30])
+            carddisplay(cardimages[card_to_index(thegame.player1.cards[1])], xloc[31], yloc[31])
 
-        carddisplay(cardimages[card_to_index(thegame.secondplayer.cards[0])], 200, 274)
-        carddisplay(cardimages[card_to_index(thegame.secondplayer.cards[1])], 290, 274)
+        carddisplay(cardimages[card_to_index(thegame.secondplayer.cards[0])], xloc[32], yloc[32])
+        carddisplay(cardimages[card_to_index(thegame.secondplayer.cards[1])], xloc[33], yloc[33])
 
         if len(thegame.community.cards) > 0:
-            xstart = 350
+            xstart = xloc[34]
             counter = 0
             for x in thegame.community.cards:
-                carddisplay(cardimages[card_to_index(x)], xstart + counter * 50, 165)
+                carddisplay(cardimages[card_to_index(x)], xstart + counter * 50, yloc[34])
                 counter += 1
         
-        mychips = text_box("Chips: {0}".format(thesession.secondplayer.money), 145, 335)
-        hischips = text_box("Chips: {0}".format(thesession.player1.money), 635, 90)
-        potdisplay = text_box("Pot: {0}".format(thegame.pot), 35, 15)
-        oppmove = text_box("Opponent: " + opponentmove, 200, 200)
+        mychips = text_box("Chips: {0}".format(thesession.secondplayer.money), xloc[35], yloc[35])
+        hischips = text_box("Chips: {0}".format(thesession.player1.money), xloc[36], yloc[36])
+        potdisplay = text_box("Pot: {0}".format(thegame.pot), xloc[37], yloc[37])
+        oppmove = text_box("Opponent: " + opponentmove, xloc[38], yloc[38])
         if thesession.bblind == True:
-            gameDisplay.blit(chipimagesmall, (200, 262))
+            gameDisplay.blit(chipimagesmall, (xloc[39], yloc[39]))
         else:
-            gameDisplay.blit(chipimagesmall, (480, 137))
+            gameDisplay.blit(chipimagesmall, (xloc[40], yloc[40]))
 
         place_chips()
         minimum = minimum_bet(thesession.blindamount, thegame.previousbet)
         maximum = thesession.secondplayer.money
         if minimum > maximum:
             minimum = maximum
-        circlex, betamount = slider(minimum, maximum, 75, 404, circlex, 125, 15, 15, green)
+        circlex, betamount = slider(minimum, maximum, xloc[41], yloc[41], circlex, xloc[42], yloc[42], int(displayheight / 33), green)
         if newgame or wintimer:
             winner = thegame.compare_score(thegame.player1, thegame.secondplayer)
             if thesession.player1.status == False:
@@ -701,11 +787,11 @@ def main():
                 winner = 1
     
             if winner > 0:
-                winnerbox = button("You Lose!", 250, 220, 100, 40, green, grey, new_hand)
+                winnerbox = button("You Lose!", xloc[43], yloc[43], xloc[44], yloc[44], green, grey, new_hand)
             if winner < 0:
-                winnerbox = button("You Win!", 250, 220, 100, 40, green, grey, new_hand)
+                winnerbox = button("You Win!", xloc[45], yloc[45], xloc[46], yloc[46], green, grey, new_hand)
             if winner == 0:
-                winnerbox = button("Tie Game!", 250, 220, 100, 40, green, grey, new_hand)
+                winnerbox = button("Tie Game!", xloc[47], yloc[47], xloc[48], yloc[48], green, grey, new_hand)
             if reveal:
                 show_score()
             wintimer = True
@@ -732,13 +818,13 @@ def main():
                     imgs = [52, 52,
                         card_to_index(thegame.secondplayer.cards[0]),
                         card_to_index(thegame.secondplayer.cards[1])]
-                    endxs = [480, 520, 200, 290]
-                    endys = [40, 40, 274, 274]
+                    endxs = [xloc[49], xloc[50], xloc[51], xloc[52]]
+                    endys = [yloc[49], yloc[50], yloc[51], yloc[52]]
                 else:
                     imgs = [card_to_index(thegame.secondplayer.cards[0]),
                         card_to_index(thegame.secondplayer.cards[1])]
-                    endxs = [200, 290]
-                    endys = [274, 274]
+                    endxs = [xloc[53], xloc[54]]
+                    endys = [yloc[53], yloc[54]]
                 card_animation(imgs, background, endxs, endys, speed=6)
             reveal = False
         clock.tick(60)

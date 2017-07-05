@@ -3,10 +3,10 @@ import random
 import math
 import csv
 import ast
-import numpy as np
-import tensorflow as tf
-import sys
-sys.path[0:0] = ['/Users/JackOHara/Desktop/code/Pythonprograms/Poker/Poker2']
+
+
+#import sys
+#sys.path[0:0] = ['/Users/JackOHara/Desktop/code/Pythonprograms/Poker/Poker2']
 from pokergamehead import *
 
 
