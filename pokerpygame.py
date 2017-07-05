@@ -72,12 +72,12 @@ def rescale():
     height = gameDisplay.get_height()
     global xloc, yloc
     counter = 0
-    for x in xloc:
-        xloc[counter] = int(x / 1.0 / displaywidth * width)
+    for x in xlocconstant:
+        xloc[counter] = int(x / 1.0 / 800 * width)
         counter += 1
     counter = 0
-    for y in yloc:
-        yloc[counter] = int(y / 1.0 / displayheight * height)
+    for y in ylocconstant:
+        yloc[counter] = int(y / 1.0 / 500 * height)
         counter += 1
     
     
@@ -88,7 +88,7 @@ def rescale():
     chipimagesmall = pygame.transform.scale(chipimagesmall, (int(.0125 * width), int(.02 * height)))
 
     chipimageside = pygame.image.load("card-BMPS/chipside.png")
-    chipimageside = pygame.transform.scale(chipimageside, (int(.01875 * width), int(.006 * height)))
+    chipimageside = pygame.transform.scale(chipimageside, (max(int(.01875 * width), 4), max([2, int(.006 * height)])))
 
     tableimg = pygame.image.load("card-BMPS/table.jpeg")
     tableimg = pygame.transform.scale(tableimg, (width, int(.8 * height)))
@@ -145,7 +145,7 @@ def text_objects(text, font):
     return textSurface, textSurface.get_rect()
 
 def text_box(msg, x, y):
-    smallText = pygame.font.Font("freesansbold.ttf", int(.03 * displayheight))
+    smallText = pygame.font.Font("freesansbold.ttf", int(.01875 * displaywidth))
     textSurf, textRect = text_objects(msg, smallText)
     textRect.center = ( (x, y) )
     gameDisplay.blit(textSurf, textRect)
@@ -161,7 +161,7 @@ def button(msg,x,y,w,h,ic,ac, action=None):
     else:
         pygame.draw.rect(gameDisplay, ic,(x,y,w,h))
 
-    smallText = pygame.font.Font("freesansbold.ttf",int(.04 * displayheight))
+    smallText = pygame.font.Font("freesansbold.ttf",int(.025 * displaywidth))
     textSurf, textRect = text_objects(msg, smallText)
     textRect.center = ( (x+(w/2)), (y+(h/2)) )
     gameDisplay.blit(textSurf, textRect)
@@ -175,12 +175,12 @@ def slider(minimum, maximum, x, y, circlex, w, h, r, color):
 
     
     pygame.draw.circle(gameDisplay, color, (circlex, y + (h/2)), r)
-    betamount = (maximum - minimum) * (circlex - x) / w + minimum
+    betamount = int((maximum - minimum) * ((circlex - x) / float(w)) ** 2 + minimum)
     if circlex - x < 3:
         betamount = minimum
     if circlex - x > w - 3:
         betamount = maximum
-    smallText = pygame.font.Font("freesansbold.ttf",int(.04 * displayheight))
+    smallText = pygame.font.Font("freesansbold.ttf",int(.025 * displaywidth))
     textSurf, textRect = text_objects(str(betamount), smallText)
     textRect.center = ( (circlex), (y+(h/2)) )
     gameDisplay.blit(textSurf, textRect)
@@ -255,13 +255,19 @@ def exit_gameoverscreen():
     game_over = True
     
 def game_overscreen():
-    global game_over
+    global game_over, gameDisplay
     while not game_over:
         for event in pygame.event.get():
             #print(event)
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+            if event.type == VIDEORESIZE:
+            # The main code that resizes the window:
+            # (recreate the window with the new size)
+                gameDisplay = pygame.display.set_mode((event.w, event.h),
+                                              pygame.RESIZABLE)
+                rescale()
         gameDisplay.fill(white)
         largeText = pygame.font.Font('freesansbold.ttf',115)
         msg = ''
@@ -500,7 +506,7 @@ def turn_function(playermove=False):
             else:
                 thesession.player1.fold(thegame)
                 opponentmove = opponent_animation("Folds")
-        print(thegame.lastbet, opponentmove)
+        #print(thegame.lastbet, opponentmove)
         return True
     if thegame.turn == False:
         if thesession.player1.status == False:
@@ -598,9 +604,11 @@ def place_chips():
     mystarty = yloc[9]
     counterx = 0
     countery = 0
+    changey =  chipimageside.get_rect().size[1] - 1
+    changex = .02125 * displaywidth
     total = int(thesession.secondplayer.money / 20)
     for x in range(total):
-        gameDisplay.blit(chipimageside, (mystartx + 17*counterx, mystarty - 2*countery))
+        gameDisplay.blit(chipimageside, (mystartx + changex*counterx, mystarty - changey*countery))
         countery +=1
         if countery > 9:
             counterx += 1
@@ -612,7 +620,7 @@ def place_chips():
     countery = 0
     total = int(thesession.player1.money / 20)
     for x in range(total):
-        gameDisplay.blit(chipimageside, (hisstartx + 17*counterx, hisstarty - 2*countery))
+        gameDisplay.blit(chipimageside, (hisstartx + changex*counterx, hisstarty - changey*countery))
         countery +=1
         if countery > 9:
             counterx += 1
@@ -624,9 +632,9 @@ def place_chips():
     countery = 0
     total = int(thegame.pot / 20)
     for x in range(total):
-        gameDisplay.blit(chipimageside, (potstartx + 17*counterx, potstarty - 2*countery))
+        gameDisplay.blit(chipimageside, (potstartx + changex*counterx, potstarty - changey*countery))
         countery +=1
-        if countery > 5:
+        if countery > 9:
             counterx += 1
             countery = 0
 
@@ -646,19 +654,20 @@ def toggle_music():
         pygame.mixer.music.unpause()
     music_on = not music_on
 
-xloc = [325, 125, 350, 400, 450, 500, 550, 455, 455, 120,
+xlocconstant = [325, 125, 350, 400, 450, 500, 550, 455, 455, 120,
         610, 280, 75, 125, 250, 125, 425, 125, 675, 75,
         740, 50, 740, 50, 735, 50, 735, 50, 480, 520,
         480, 520, 200, 290, 350, 145, 635, 35, 200, 200,
-        480, 75, 125, 250, 100, 250, 100, 250, 100, 480,
+        480, 75, 125, 250, 100, 250, 100, 250, 60, 480,
         520, 200, 290, 200, 290]
-yloc = [350, 40, 165, 165, 165, 165, 165, 290, 315, 320,
-        130, 200, 425, 40, 425, 40, 425, 40, 430, 25,
+ylocconstant = [350, 40, 165, 165, 165, 165, 165, 290, 315, 320,
+        120, 200, 425, 40, 425, 40, 425, 40, 430, 25,
         18, 25, 18, 25, 380, 25, 380, 25, 40, 40,
         40, 40, 274, 274, 165, 335, 90, 15, 200, 262,
         137, 404, 15, 220, 40, 220, 40, 220, 40, 40,
         40, 274, 274, 274, 274]
-    
+xloc = copy.copy(xlocconstant)
+yloc = copy.copy(ylocconstant)
 thesession = session()
 thegame = game(thesession)
 betamount = thesession.blindamount
