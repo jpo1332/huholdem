@@ -1,7 +1,7 @@
 #!/usr/bin/env
 import numpy as np
 import csv
-import tensorflow as tf
+#import tensorflow as tf
 from random import randint
 from random import seed
 import random

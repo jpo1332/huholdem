@@ -22,7 +22,9 @@ class card:
     def __init__(self, suit, value):
         self.cardsuit = suit
         self.number = value
-
+    def __eq__(self, other):
+        return self.cardsuit == other.cardsuit and self.number == other.number
+        
     def print_card(self):
         tempnumber = self.number
         if self.number > 10:
