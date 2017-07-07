@@ -159,8 +159,8 @@ rnnflopprobs = rnnflopprobs[:len(rnnflopprobs)-1]
 xs = []
 ys = []
 for x in rnnflopprobs:
-    xs.append(tuple(x[:len(x)-1]))
-    ys.append(x[len(x)-1])
+    xs.append(tuple(x[:len(x)-2]))
+    ys.append(x[len(x)-2])
 rnnflopprobs = zip(xs, ys)
 rnnflopprobs = dict(rnnflopprobs)
 
@@ -183,8 +183,8 @@ rnnturnprobs = rnnturnprobs[:len(rnnturnprobs)-1]
 xs = []
 ys = []
 for x in rnnturnprobs:
-    xs.append(tuple(x[:len(x)-1]))
-    ys.append(x[len(x)-1])
+    xs.append(tuple(x[:len(x)-2]))
+    ys.append(x[len(x)-2])
 rnnturnprobs = zip(xs, ys)
 rnnturnprobs = dict(rnnturnprobs)
 
@@ -207,7 +207,7 @@ rnnriverprobs = rnnriverprobs[:len(rnnriverprobs)-1]
 xs = []
 ys = []
 for x in rnnriverprobs:
-    xs.append(tuple(x[:len(x)-1]))
-    ys.append(x[len(x)-1])
+    xs.append(tuple(x[:len(x)-2]))
+    ys.append(x[len(x)-2])
 rnnriverprobs = zip(xs, ys)
 rnnriverprobs = dict(rnnriverprobs)
