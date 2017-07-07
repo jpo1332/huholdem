@@ -5,6 +5,7 @@ import random
 import math
 import timeit
 import sys
+import ast
 sys.path[0:0] = ['/Users/JackOHara/Desktop/code/Pythonprograms/Poker/poker2']
 from pokergamehead import *
 
@@ -51,15 +52,16 @@ def make_hand(card1, card2, suited, deck, scoretype, scorelevel, turn):
             needsecond = 1
         
 def index_inlist(a, b, c, handtype, handlevel, thelist):
-    '''
+    return handlevel - 2 + 13 * (handtype - 2) + 273 * c + 546 * (b-2) + 7098 * (a - 2)
+
+def index_inlistslow(a, b, c, handtype, handlevel, thelist):
     counter = 0
     for x in thelist:
         if x[:5] == [a, b, c, handtype, handlevel]:
             break
         counter += 1
     return counter
-    '''
-    return handlevel - 2 + 13 * (handtype - 2) + 273 * c + 546 * (b-2) + 7098 * (a - 2)
+
 def main():
     thesession = session()
     flop = []
@@ -83,6 +85,62 @@ def main():
                         turn.append([a, b, c, d, e, 0, 0])
                         river.append([a, b, c, d, e, 0, 0])
     starttime = timeit.default_timer()
+    print len(flop)
+    flop1 = []
+    turn1 = []
+    river1 = []
+    if len(sys.argv) > 1:
+        flop_probs = open("rnnflop.csv", 'r')
+        flopprobs = flop_probs.read()
+        flopprobs = flopprobs.split("\n")
+        counterx = 0
+        for x in flopprobs:
+            x = x.split(",")
+            z = []
+            try:
+                for y in x:
+                    z.append(ast.literal_eval(y))
+                flopprobs[counterx] = z
+            except:
+                pass
+            counterx += 1
+        flop_probs.close()
+        flop1 = flopprobs[:len(flopprobs)-1]
+
+        turn_probs = open("rnnturn.csv", 'r')
+        turnprobs = turn_probs.read()
+        turnprobs = turnprobs.split("\n")
+        counterx = 0
+        for x in turnprobs:
+            x = x.split(",")
+            z = []
+            try:
+                for y in x:
+                    z.append(ast.literal_eval(y))
+                turnprobs[counterx] = z
+            except:
+                pass
+            counterx += 1
+        turn_probs.close()
+        turn1 = turnprobs[:len(turnprobs)-1]
+        
+        river_probs = open("rnnriver.csv", 'r')
+        riverprobs = river_probs.read()
+        riverprobs = riverprobs.split("\n")
+        counterx = 0
+        for x in riverprobs:
+            x = x.split(",")
+            z = []
+            try:
+                for y in x:
+                    z.append(ast.literal_eval(y))
+                riverprobs[counterx] = z
+            except:
+                pass
+            counterx += 1
+        river_probs.close()
+        river1 = riverprobs[:len(riverprobs)-1]
+    
     atime = 0
     btime = 0
     ctime = 0
@@ -96,7 +154,7 @@ def main():
                 if a == b and c == 1:
                     continue
                 categories += 1
-                for d in range(150000):
+                for d in range(200):
                     #astart = timeit.default_timer()
                     thegame = game(thesession)
                     thegame.player1.cards.append(card(1, a))
@@ -185,18 +243,60 @@ def main():
     wr2 = csv.writer(resultFile2, dialect='excel')
     resultFile3 = open("rnnriver.csv", 'w')
     wr3 = csv.writer(resultFile3, dialect='excel')
-    counter = 0
+    if len(sys.argv) > 1:
+        counter = 0
+        for x in flop1:
+            index = index_inlist(flop1[counter][0], flop1[counter][1], flop1[counter][2], flop1[counter][3], flop1[counter][4], flop)
+            if flop[index][6] != 0:
+                newtotal = flop[index][6] + flop1[counter][6]
+                newprop = float(flop1[counter][5]) * (flop1[counter][6] / float(newtotal)) + (flop[index][5] / float(flop[index][6])) * (flop[index][6] / float(newtotal))
+                newsum = newtotal * newprop
+                flop[index] = flop[index][:5] + [newsum, newtotal]
+            else:
+                flop[index] = flop[index][:5] + [flop1[counter][5] * flop1[counter][6], flop1[counter][6]]
+            counter += 1
+
+        counter = 0
+        for x in turn1:
+            index = index_inlist(turn1[counter][0], turn1[counter][1], turn1[counter][2], turn1[counter][3], turn1[counter][4], turn)
+            if turn[index][6] != 0:
+                newtotal = turn[index][6] + turn1[counter][6]
+                newprop = float(turn1[counter][5]) * (turn1[counter][6] / float(newtotal)) + (turn[index][5] / float(turn[index][6])) * (turn[index][6] / float(newtotal))
+                newsum = newtotal * newprop
+                turn[index] = turn[index][:5] + [newsum, newtotal]
+            else:
+                turn[index] = turn[index][:5] + [turn1[counter][5] * turn1[counter][6], turn1[counter][6]]
+            counter += 1
+                                                                                              
+        counter = 0
+        for x in river1:
+            index = index_inlist(river1[counter][0], river1[counter][1], river1[counter][2], river1[counter][3], river1[counter][4], river)
+            if river[index][6] != 0:
+                newtotal = river[index][6] + river1[counter][6]
+                newprop = float(river1[counter][5]) * (river1[counter][6] / float(newtotal)) + (river[index][5] / float(river[index][6])) * (river[index][6] / float(newtotal))
+                newsum = newtotal * newprop
+                river[index] = river[index][:5] + [newsum, newtotal]
+            else:
+                river[index] = river[index][:5] + [river1[counter][5] * river1[counter][6], river1[counter][6]]
+            counter += 1
+    counter = 0                                                                                               
     for x in flop:
-        if flop[counter][6] != 0:
-            y = flop[counter][:5] + [float(flop[counter][5]) / flop[counter][6]] + [flop[counter][6]]
+            if flop[counter][6] != 0:
+                y = flop[counter][:5] + [float(flop[counter][5]) / flop[counter][6]] + [flop[counter][6]]
+            else:
+                y = flop[counter]
             wr1.writerows([y])
-        if turn[counter][6] != 0:
-            y = turn[counter][:5] + [float(turn[counter][5]) / turn[counter][6]] + [turn[counter][6]]
+            if turn[counter][6] != 0:
+                y = turn[counter][:5] + [float(turn[counter][5]) / turn[counter][6]] + [turn[counter][6]]
+            else:
+                y = turn[counter]
             wr2.writerows([y])
-        if river[counter][6] != 0:
-            y = river[counter][:5] + [float(river[counter][5]) / river[counter][6]] + [river[counter][6]]
+            if river[counter][6] != 0:
+                y = river[counter][:5] + [float(river[counter][5]) / river[counter][6]] + [river[counter][6]]
+            else:
+                y = river[counter]
             wr3.writerows([y])
-        counter += 1
+            counter += 1                                                                                               
     endtime = timeit.default_timer() - starttime
     print(river[:50])
     print(len(river))
