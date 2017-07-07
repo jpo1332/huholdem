@@ -139,103 +139,75 @@ for x in comturn:
     ys.append(x[len(x)-1])
 comturn = zip(xs, ys)
 comturn = dict(comturn)
-    
 
-def return_com(game1):
-    num = []
-    suits = []
-    for x in game1.community.cards:
-        num.append(x.number)
-        suits.append(x.cardsuit)
-    num.sort()
-    #print num, suits
-    threekind = 0
-    for x in num:
-        if num.count(x) == 3:
-            threekind = 1
-    twopair, onepair = check_pairs(num)
-    if onepair == False:
-        onepair = 0
-    if twopair == False:
-        twopair = 0
-    if onepair != 0:
-        onepair = 1
-    if twopair != 0:
-        twopair = 1
-    flush = 0
-    for x in suits:
-        if suits.count(x) > flush:
-            flush = suits.count(x)
-    num = list(set(num))
-    num.sort()
-    straight = [0]
-    y = 0
-    #Following checks for straight, pain in butt to make; careful
-    while y < 2:
-        x = 0
-        check = 0
-        while x < 4:
-            #print num[len(num) - 1 - x - y] - 1, num[len(num) - 2 - x - y]
-            try:
-                if num[len(num) - 1 - x - y] - 1 == num[len(num) - 2 - x - y]:
-                    check += 1
-                else:
-                    straight.append(check)
-                    check = 0
-            except:
-                break
-            x += 1
-        y += 1
-    straight = max(straight)
-    returns = [threekind, twopair, onepair, flush, straight]
-    return returns
-def check_prob(rounds, game1, players):
-    if rounds == 0:
-        card1 = players.cards[0].number
-        card2 = players.cards[1].number
-        samesuit = 0
-        if players.cards[0].cardsuit == players.cards[1].cardsuit:
-            samesuit = 1
-        probability = openprobs.get((card1,card2,samesuit), .1)
-        move = 0
-        if probability <= .35:
-            move = 0
-        elif probability >= .7 and game1.previousbet < 80:
-            move = 2
-        else:
-            move = 1
-        return move, probability
-    game1.compare_score(game1.player1, game1.secondplayer)
-    if rounds == 1:
-        probability = flopprobs.get((players.handscore.type - 2, players.handscore.level - 2), .1)
-        move = 0
-        if probability <= .4:
-            move = 0
-        elif probability >= .7 and game1.previousbet < 80:
-            move = 2
-        else:
-            move = 1
-        return move, probability
-    if rounds == 2:
-        probability = turnprobs.get((players.handscore.type - 2, players.handscore.level - 2), .1)
-        move = 0
-        if probability <= .4:
-            move = 0
-        elif probability >= .75 and game1.previousbet < 120:
-            move = 2
-        else:
-            move = 1
-        return move, probability
-    if rounds == 3:
-        probability = riverprobs.get((players.handscore.type - 2, players.handscore.level - 2, players.handscore.high - 2), .1)
-        move = 0
-        if probability <= .35:
-            move = 0
-        elif probability >= .75 and game1.previousbet < 80:
-            move = 2
-        else:
-            move = 1
-        return move, probability
-    return 0
+rnnflop_probs = open("probs/rnnflop.csv", 'r')
+rnnflopprobs = rnnflop_probs.read()
+rnnflopprobs = rnnflopprobs.split("\n")
+counterx = 0
+for x in rnnflopprobs:
+    x = x.split(",")
+    z = []
+    try:
+        for y in x:
+            z.append(ast.literal_eval(y))
+        rnnflopprobs[counterx] = z
+    except:
+        pass
+    counterx += 1
+rnnflop_probs.close()
+rnnflopprobs = rnnflopprobs[:len(rnnflopprobs)-1]
+xs = []
+ys = []
+for x in rnnflopprobs:
+    xs.append(tuple(x[:len(x)-1]))
+    ys.append(x[len(x)-1])
+rnnflopprobs = zip(xs, ys)
+rnnflopprobs = dict(rnnflopprobs)
 
+rnnturn_probs = open("probs/rnnturn.csv", 'r')
+rnnturnprobs = rnnturn_probs.read()
+rnnturnprobs = rnnturnprobs.split("\n")
+counterx = 0
+for x in rnnturnprobs:
+    x = x.split(",")
+    z = []
+    try:
+        for y in x:
+            z.append(ast.literal_eval(y))
+        rnnturnprobs[counterx] = z
+    except:
+        pass
+    counterx += 1
+rnnturn_probs.close()
+rnnturnprobs = rnnturnprobs[:len(rnnturnprobs)-1]
+xs = []
+ys = []
+for x in rnnturnprobs:
+    xs.append(tuple(x[:len(x)-1]))
+    ys.append(x[len(x)-1])
+rnnturnprobs = zip(xs, ys)
+rnnturnprobs = dict(rnnturnprobs)
 
+rnnriver_probs = open("probs/rnnriver.csv", 'r')
+rnnriverprobs = rnnriver_probs.read()
+rnnriverprobs = rnnriverprobs.split("\n")
+counterx = 0
+for x in rnnriverprobs:
+    x = x.split(",")
+    z = []
+    try:
+        for y in x:
+            z.append(ast.literal_eval(y))
+        rnnriverprobs[counterx] = z
+    except:
+        pass
+    counterx += 1
+rnnriver_probs.close()
+rnnriverprobs = rnnriverprobs[:len(rnnriverprobs)-1] 
+xs = []
+ys = []
+for x in rnnriverprobs:
+    xs.append(tuple(x[:len(x)-1]))
+    ys.append(x[len(x)-1])
+rnnriverprobs = zip(xs, ys)
+rnnriverprobs = dict(rnnriverprobs)

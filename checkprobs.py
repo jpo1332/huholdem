@@ -6,7 +6,7 @@ import ast
 import numpy as np
 #import tensorflow as tf
 import sys
-sys.path[0:0] = ['/Users/JackOHara/Desktop/code/Pythonprograms/Poker/Poker2']
+#sys.path[0:0] = ['/Users/JackOHara/Desktop/code/Pythonprograms/Poker/Poker2']
 from pokergamehead import *
 from loadprobs import *
 
@@ -71,6 +71,25 @@ def return_com(game1):
     '''
     returns = [threekind, twopair, onepair, highcard, flush, straight]
     return returns
+def check_rnnprob(rounds, game1, player1):
+    card1 = max(player1.cards[0].number, player1.cards[1].number)
+    card2 = min(player1.cards[0].number, player1.cards[1].number)
+    samesuit = 0
+    if players.cards[0].cardsuit == players.cards[1].cardsuit:
+        samesuit = 1
+    if rounds == 0:
+        probability = openprobs.get((card1,card2,samesuit), .1)
+    else:
+        player1.update_score(game1.community)
+        handtype = player1.handscore.type
+        handlevel = player1.handscore.level
+        if rounds == 1:
+            probability = rnnflopprobs.get((card1, card2, samesuit, handtype, handlevel), .2)
+        elif rounds == 2:
+            probability = rnnturnprobs.get((card1, card2, samesuit, handtype, handlevel), .2)
+        elif rounds == 3:
+            probability = rnnriverprobs.get((card1, card2, samesuit, handtype, handlevel), .2)
+    return probability
 def check_prob(rounds, game1, players):
     if rounds == 0:
         card1 = players.cards[0].number

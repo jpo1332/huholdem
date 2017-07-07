@@ -283,19 +283,13 @@ def main():
     for x in flop:
             if flop[counter][6] != 0:
                 y = flop[counter][:5] + [float(flop[counter][5]) / flop[counter][6]] + [flop[counter][6]]
-            else:
-                y = flop[counter]
-            wr1.writerows([y])
+                wr1.writerows([y])
             if turn[counter][6] != 0:
                 y = turn[counter][:5] + [float(turn[counter][5]) / turn[counter][6]] + [turn[counter][6]]
-            else:
-                y = turn[counter]
-            wr2.writerows([y])
+                wr2.writerows([y])
             if river[counter][6] != 0:
                 y = river[counter][:5] + [float(river[counter][5]) / river[counter][6]] + [river[counter][6]]
-            else:
-                y = river[counter]
-            wr3.writerows([y])
+                wr3.writerows([y])
             counter += 1                                                                                               
     endtime = timeit.default_timer() - starttime
     print(river[:50])

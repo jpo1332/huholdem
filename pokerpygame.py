@@ -8,7 +8,6 @@ import time
 import copy
 #sys.path[0:0] = ['/Users/JackOHara/Desktop/code/Pythonprograms/Poker']
 from pokergamehead import *
-from loadprobs import *
 from checkprobs import *
 from modelheader import *
 
