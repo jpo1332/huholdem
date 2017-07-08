@@ -140,6 +140,31 @@ for x in comturn:
 comturn = zip(xs, ys)
 comturn = dict(comturn)
 
+rnnopen_probs = open("probs/rnnopen.csv", 'r')
+rnnopenprobs = rnnopen_probs.read()
+rnnopenprobs = rnnopenprobs.split("\n")
+counterx = 0
+for x in rnnopenprobs:
+    x = x.split(",")
+    z = []
+    try:
+        for y in x:
+            z.append(ast.literal_eval(y))
+        rnnopenprobs[counterx] = z
+    except:
+        pass
+    counterx += 1
+rnnopen_probs.close()
+rnnopenprobs = rnnopenprobs[:len(rnnopenprobs)-1]
+xs = []
+ys = []
+for x in rnnopenprobs:
+    xs.append(tuple(x[:len(x)-2]))
+    ys.append(x[len(x)-2])
+rnnopenprobs = zip(xs, ys)
+rnnopenprobs = dict(rnnopenprobs)
+
+
 rnnflop_probs = open("probs/rnnflop.csv", 'r')
 rnnflopprobs = rnnflop_probs.read()
 rnnflopprobs = rnnflopprobs.split("\n")

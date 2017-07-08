@@ -75,10 +75,10 @@ def check_rnnprob(rounds, game1, player1):
     card1 = max(player1.cards[0].number, player1.cards[1].number)
     card2 = min(player1.cards[0].number, player1.cards[1].number)
     samesuit = 0
-    if players.cards[0].cardsuit == players.cards[1].cardsuit:
+    if player1.cards[0].cardsuit == player1.cards[1].cardsuit:
         samesuit = 1
     if rounds == 0:
-        probability = openprobs.get((card1,card2,samesuit), .1)
+        probability = rnnopenprobs.get((card1,card2,samesuit), .2)
     else:
         player1.update_score(game1.community)
         handtype = player1.handscore.type

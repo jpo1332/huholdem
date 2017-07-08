@@ -305,10 +305,12 @@ class game:
         self.community = hand()
         self.round = 0
         session1.bblind = not session1.bblind
-        
+        self.lastbet = session1.blindamount / 2.0
         self.player1 = hand()
         self.secondplayer = hand()
     def start(self, session1, prin=False, human=False):
+        session1.player1.status = True
+        session1.secondplayer.status = True
         if self.turn == True:
             transfer_money(self, session1.player1, session1.blindamount, True)
             session1.player1.potinvest += session1.blindamount
@@ -380,6 +382,59 @@ class game:
         if y.handscore.last > x.handscore.last:
             return -1
         return 0
+    def check_endround(self, thesession):
+        if thesession.player1.status == False or thesession.secondplayer.status == False:
+            return True
+        if thesession.player1.active == False and thesession.secondplayer.active == False:
+            return True
+        if self.turn:
+            if thesession.player1.allin == True:
+                thesession.secondplayer.active = False
+                thesession.player1.active = False
+                return True
+        else:
+            if thesession.secondplayer.allin == True:
+                thesession.secondplayer.active = False
+                thesession.player1.active = False
+                return True
+        return False
+    def check_endgame(self, thesession):
+        if thesession.player1.status == False or thesession.secondplayer.status == False:
+            return True
+        if self.round == 4 and (thesession.player1.active == False and thesession.secondplayer.active == False):
+            return True
+        return False
+    def end_game(self, thesession):
+        if thesession.player1.status == False:
+            transfer_money(self, thesession.secondplayer, self.pot, False)
+            return True
+        if thesession.secondplayer.status == False:
+            transfer_money(self, thesession.player1, self.pot, False)
+            return False
+        winner = self.compare_score(self.player1, self.secondplayer)
+        if winner > 0:
+            #print "Player 1 wins"
+            transfer_money(self, thesession.player1, self.pot, False)
+            return False
+        if winner< 0:
+            #print "Player 2 wins"
+            transfer_money(self, thesession.secondplayer, self.pot, False)
+            return True
+        transfer_money(self, thesession.player1, math.floor(self.pot / 2), False)
+        transfer_money(self, thesession.secondplayer, math.floor(self.pot), False)
+        
+        #print "Tie game"
+        return False
+        
+        
+    def start_newround(self, session1):
+        self.turn = session1.bblind
+        self.previousbet = 0
+        session1.player1.potinvest = 0
+        session1.secondplayer.potinvest = 0
+    
+        session1.player1.active = True
+        session1.secondplayer.active = True
 
 def end_round(game1, session1):
         if session1.player1.status != True:
