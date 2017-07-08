@@ -76,13 +76,13 @@ class Agent:
 def current_state(thegame, thesession, player1, player2):
     prob = check_rnnprob(thegame.round, thegame, thegame.player1)
     if thegame.round == 0:
-	rounds = [0,0,0,1]
+        rounds = [0, 0, 0, 1]
     elif thegame.round == 1:
-	rounds = [ 0,0,1,0]
+        rounds = [0, 0, 1, 0]
     elif thegame.round == 2:
-	rounds = [0,1,0,0]
+        rounds = [0, 1, 0, 0]
     else:
-	rounds = [1,0,0,0]
+        rounds = [1, 0, 0, 0]
     bb = thesession.bblind
     try:
         pot = float(thegame.pot) / float(player1.money)

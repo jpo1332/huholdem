@@ -2,29 +2,34 @@
 
 import random
 import math
-import copy
+
+
+# import copy
 
 
 class deck:
     def __init__(self):
         self.attributes = []
         for x in range(4):
-            for y in range(2,15):
-                self.attributes.append(card(x,y))
+            for y in range(2, 15):
+                self.attributes.append(card(x, y))
         random.shuffle(self.attributes)
-        #create 52 cards and then shuffle them
+        # create 52 cards and then shuffle them
+
     def deal_card(self):
         newcard = self.attributes[0]
         del self.attributes[0]
         return newcard
 
+
 class card:
     def __init__(self, suit, value):
         self.cardsuit = suit
         self.number = value
+
     def __eq__(self, other):
         return self.cardsuit == other.cardsuit and self.number == other.number
-        
+
     def print_card(self):
         tempnumber = self.number
         if self.number > 10:
@@ -44,19 +49,22 @@ class card:
             print tempnumber, u'\u2666',
         if self.cardsuit == 3:
             print tempnumber, u'\u2663',
-        #format for printing suits and royals
+        # format for printing suits and royals
         return
-    
+
+
 class hand:
     def __init__(self):
-         self.cards = []
-         self.handscore = score()
-         
+        self.cards = []
+        self.handscore = score()
+
     def get_card(self, deck):
         self.cards.append(deck.deal_card())
+
     def print_hand(self):
         for x in self.cards:
             x.print_card()
+
     def update_score(self, community):
         newhand = hand()
         if community:
@@ -68,32 +76,32 @@ class hand:
         for x in newhand.cards:
             suit.append(x.cardsuit)
             num.append(x.number)
-        #print num, suit
-        #newhand.print_hand()
+        # print num, suit
+        # newhand.print_hand()
         flush, flushnumbers = check_flush(suit, num)
         straight = check_straight(num)
-        fourkind= check_4kind(num)
+        fourkind = check_4kind(num)
         threekind, fulllow = check_full(num)
         twopair, pair = check_pairs(num)
 
         if straight > 0 and flush > 0:
-            #should work almost always
-            if flushnumbers[0] == straight and (sum(flushnumbers[:5])/5 == flushnumbers[2]
-                and flushnumbers[4] == straight - 4):
+            # should work almost always
+            if flushnumbers[0] == straight and (sum(flushnumbers[:5]) / 5 == flushnumbers[2]
+                                                and flushnumbers[4] == straight - 4):
                 self.handscore.type = 22
                 self.handscore.level = straight
                 self.handscore.high = 0
                 self.handscore.reserve = 0
                 self.handscore.last = 0
                 return
-            if sum(flushnumbers[:5])/5 == flushnumbers[2] and flushnumbers[4] == flushnumbers[0] - 4:
+            if sum(flushnumbers[:5]) / 5 == flushnumbers[2] and flushnumbers[4] == flushnumbers[0] - 4:
                 self.handscore.type = 22
                 self.handscore.level = flushnumbers[0]
                 self.handscore.high = 0
                 self.handscore.reserve = 0
                 self.handscore.last = 0
                 return
-               
+
         if fourkind > 0:
             self.handscore.type = 21
             self.handscore.level = fourkind
@@ -131,7 +139,7 @@ class hand:
             self.handscore.reserve = 0
             self.handscore.last = 0
             return
-        if threekind >0:
+        if threekind > 0:
             self.handscore.type = 17
             self.handscore.level = threekind
 
@@ -193,7 +201,7 @@ class hand:
             self.handscore.last = 0
         return
 
-   
+
 def check_pairs(num):
     num.sort(reverse=True)
     for x in num:
@@ -208,13 +216,15 @@ def check_pairs(num):
             return False, x
     return False, False
 
+
 def check_4kind(num):
     for x in num:
         if num.count(x) == 4:
-            #print "found 4kind"
+            # print "found 4kind"
             return x
-            
+
     return False
+
 
 def check_full(num):
     num.sort(reverse=True)
@@ -226,13 +236,13 @@ def check_full(num):
                     templist.append(y)
             for y in templist:
                 if templist.count(y) == 2:
-                    #print "full boat"
+                    # print "full boat"
                     return x, y
-            #print "threekind"
+            # print "threekind"
             return x, False
     return False, False
-                    
-    
+
+
 def check_straight(num):
     num.sort()
     num = list(set(num))
@@ -259,7 +269,7 @@ def check_straight(num):
     for x in num:
         tempstraight = 0
         for y in range(5):
-            if (x+y) in num:
+            if (x + y) in num:
                 tempstraight += 1
         if tempstraight >= 5:
             straight.append(x + 4)
@@ -269,9 +279,10 @@ def check_straight(num):
         straight = False
     return straight
 
+
 def check_flush(suit, num):
-    #Check for a flush
-    
+    # Check for a flush
+
     for x in suit:
         if suit.count(x) > 4:
             templist = zip(suit, num)
@@ -280,7 +291,7 @@ def check_flush(suit, num):
                 if y[0] == x:
                     temp.append(y[1])
             temp.sort(reverse=True)
-            #print "flush yes"
+            # print "flush yes"
             return (x + 1), temp
     return False, False
 
@@ -292,9 +303,11 @@ class score:
         self.high = 0
         self.reserve = 0
         self.last = 0
+
     def print_score(self):
         templist = [self.type, self.level, self.high, self.reserve, self.last]
         print templist,
+
 
 class game:
     def __init__(self, session1):
@@ -308,6 +321,7 @@ class game:
         self.lastbet = session1.blindamount / 2.0
         self.player1 = hand()
         self.secondplayer = hand()
+
     def start(self, session1, prin=False, human=False):
         session1.player1.status = True
         session1.secondplayer.status = True
@@ -316,33 +330,34 @@ class game:
         if self.turn == False:
             transfer_money(self, session1.player1, session1.blindamount, True)
             session1.player1.potinvest = session1.blindamount
-            
+
             transfer_money(self, session1.secondplayer, math.floor(session1.blindamount / 2.0), True)
             session1.secondplayer.potinvest = math.floor(session1.blindamount / 2.0)
-            
+
         if self.turn == True:
             transfer_money(self, session1.player1, math.floor(session1.blindamount / 2.0), True)
             session1.player1.potinvest = math.floor(session1.blindamount / 2.0)
-            
+
             transfer_money(self, session1.secondplayer, session1.blindamount, True)
             session1.secondplayer.potinvest = session1.blindamount
 
         self.previousbet = session1.blindamount
         self.lastbet = math.floor(session1.blindamount / 2.0)
-        
+
         self.player1.get_card(self.thedeck)
         self.player1.get_card(self.thedeck)
-        
+
         self.secondplayer.get_card(self.thedeck)
         self.secondplayer.get_card(self.thedeck)
         if prin:
-            print "Pot:{0}   Player 1:{1}  Player 2:{2}".format(self.pot, session1.player1.money, session1.secondplayer.money)
+            print "Pot:{0}   Player 1:{1}  Player 2:{2}".format(self.pot, session1.player1.money,
+                                                                session1.secondplayer.money)
             if not human:
                 self.player1.print_hand(),
                 print '  ',
             self.secondplayer.print_hand()
             print '\n'
-    
+
     def flop(self, prin=False):
         self.round += 1
         self.community.get_card(self.thedeck)
@@ -351,12 +366,13 @@ class game:
         if prin:
             self.community.print_hand()
             print "\n"
+
     def river(self, prin=False):
         self.round += 1
         self.community.get_card(self.thedeck)
         if prin:
-            self.community.cards[len(self.community.cards)-1].print_card()
-            #self.community.print_hand()
+            self.community.cards[len(self.community.cards) - 1].print_card()
+            # self.community.print_hand()
             print "\n"
 
     def compare_score(self, x, y, prin=False):
@@ -387,6 +403,7 @@ class game:
         if y.handscore.last > x.handscore.last:
             return -1
         return 0
+
     def check_endround(self, thesession):
         if thesession.player1.status == False or thesession.secondplayer.status == False:
             return True
@@ -406,14 +423,16 @@ class game:
                 return True
             if thesession.secondplayer.active == False:
                 return True
-        
+
         return False
+
     def check_endgame(self, thesession):
         if thesession.player1.status == False or thesession.secondplayer.status == False:
             return True
         if self.round == 3 and (thesession.player1.active == False and thesession.secondplayer.active == False):
             return True
         return False
+
     def end_game(self, thesession, prin=False):
         if thesession.player1.status == False:
             transfer_money(self, thesession.secondplayer, self.pot, False)
@@ -427,22 +446,22 @@ class game:
                 print "Player 1 wins"
             transfer_money(self, thesession.player1, self.pot, False)
             return False
-        if winner< 0:
+        if winner < 0:
             if prin:
                 print "Player 2 wins"
             transfer_money(self, thesession.secondplayer, self.pot, False)
             return True
         transfer_money(self, thesession.player1, math.floor(self.pot / 2), False)
         transfer_money(self, thesession.secondplayer, math.floor(self.pot), False)
-        
+
         if prin:
             print "Tie game"
         return False
-        
-        
+
     def start_newround(self, session1, prin=False):
         if prin:
-            print "Pot:{0}   Player 1:{1}  Player 2:{2}".format(self.pot, session1.player1.money, session1.secondplayer.money)
+            print "Pot:{0}   Player 1:{1}  Player 2:{2}".format(self.pot, session1.player1.money,
+                                                                session1.secondplayer.money)
         self.turn = session1.bblind
         self.previousbet = 0
         session1.player1.potinvest = 0
@@ -451,14 +470,16 @@ class game:
         session1.player1.active = True
         session1.secondplayer.active = True
 
+
 def end_round(game1, session1):
-        if session1.player1.status != True:
-            transfer_money(game1, session1.secondplayer, game1.pot, False)
-            return True
-        if session1.secondplayer.status != True:
-            transfer_money(game1, session1.player1, game1.pot, False)
-            return True
-        return False
+    if session1.player1.status != True:
+        transfer_money(game1, session1.secondplayer, game1.pot, False)
+        return True
+    if session1.secondplayer.status != True:
+        transfer_money(game1, session1.player1, game1.pot, False)
+        return True
+    return False
+
 
 def transfer_money(game1, player1, amount, fromorto):
     if fromorto == True:
@@ -474,16 +495,19 @@ def transfer_money(game1, player1, amount, fromorto):
     if fromorto == False:
         player1.money += amount
         game1.pot -= amount
-    
+
+
 class session:
     def __init__(self, blindamount=20, playerchips=400):
         self.bblind = False
         self.blindamount = blindamount
         self.player1 = player(playerchips)
         self.secondplayer = player(playerchips)
-    
+
+
 def minimum_bet(bigblind, previousbet):
     return bigblind + previousbet
+
 
 class player:
     def __init__(self, chips):
@@ -493,6 +517,7 @@ class player:
         self.active = True
         self.allin = False
         self.previousmove = 0
+
     def raise1(self, game1, bet, minimum, prin=False):
         if self.money < game1.previousbet - self.potinvest:
             self.call(game1, prin=prin)
@@ -508,7 +533,7 @@ class player:
         '''
         if bet >= minimum:
             self.previousmove = 2
-            #print "raises",
+            # print "raises",
             if self.money > bet:
                 transfer_money(game1, self, game1.previousbet - self.potinvest, True)
                 transfer_money(game1, self, bet, True)
@@ -533,22 +558,23 @@ class player:
                 return bet
         bet = self.raise1(game1, minimum, minimum, prin=prin)
         return bet
+
     def call(self, game1, prin=False):
-        #print "calls",
+        # print "calls",
         amount = 0
         if self.potinvest >= game1.previousbet:
             game1.turn = not game1.turn
             self.active = False
             self.previousmove = 0
             game1.previousbet = self.potinvest
-            if prin:            
+            if prin:
                 print "checks"
             return amount
         self.previousmove = 1
         if game1.previousbet - self.potinvest < self.money:
             if prin:
                 print "calls", game1.previousbet - self.potinvest
-            amount = game1.previousbet  - self.potinvest
+            amount = game1.previousbet - self.potinvest
             transfer_money(game1, self, game1.previousbet - self.potinvest, True)
             self.potinvest = game1.previousbet
             game1.turn = not game1.turn
@@ -562,11 +588,10 @@ class player:
         if prin:
             print "calls ALL IN!"
         return amount
+
     def fold(self, game1, prin=False):
         self.status = False
         self.active = False
         if prin:
             print "folds"
         return False
-
-
