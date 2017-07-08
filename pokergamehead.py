@@ -324,7 +324,7 @@ class game:
             transfer_money(self, session1.secondplayer, session1.blindamount, True)
             session1.secondplayer.potinvest += session1.blindamount
 
-        
+        self.previousbet = session1.blindamount
         self.player1.get_card(self.thedeck)
         self.player1.get_card(self.thedeck)
         
@@ -404,7 +404,7 @@ class game:
         if self.round == 4 and (thesession.player1.active == False and thesession.secondplayer.active == False):
             return True
         return False
-    def end_game(self, thesession):
+    def end_game(self, thesession, prin=False):
         if thesession.player1.status == False:
             transfer_money(self, thesession.secondplayer, self.pot, False)
             return True
@@ -413,19 +413,21 @@ class game:
             return False
         winner = self.compare_score(self.player1, self.secondplayer)
         if winner > 0:
-            #print "Player 1 wins"
+	    if prin:
+            	print "Player 1 wins"
             transfer_money(self, thesession.player1, self.pot, False)
             return False
         if winner< 0:
-            #print "Player 2 wins"
+            if prin:
+		print "Player 2 wins"
             transfer_money(self, thesession.secondplayer, self.pot, False)
             return True
         transfer_money(self, thesession.player1, math.floor(self.pot / 2), False)
         transfer_money(self, thesession.secondplayer, math.floor(self.pot), False)
         
-        #print "Tie game"
+        if prin:
+	    print "Tie game"
         return False
-        
         
     def start_newround(self, session1):
         self.turn = session1.bblind
@@ -491,33 +493,32 @@ class player:
         if bet > maxbet:
             bet = maxbet
         '''
-        if bet >= minimum:
-            self.previousmove = 2
-            #print "raises",
-            if self.money > bet:
-                transfer_money(game1, self, game1.previousbet - self.potinvest, True)
-                transfer_money(game1, self, bet, True)
-                game1.previousbet += bet
-                game1.lastbet = bet
-                game1.turn = not game1.turn
-                self.active = False
-                if prin:
-                    print "raises", bet
-                return bet
-            else:
-                transfer_money(game1, self, game1.previousbet - self.potinvest, True)
-                game1.previousbet += self.money
-                bet = self.money
-                game1.lastbet = self.money
-                transfer_money(game1, self, self.money, True)
-                game1.turn = not game1.turn
-                self.active = False
-                self.allin = True
-                if prin:
-                    print "raises All IN!"
-                return bet
+	self.previousmove = 2
+	#print "raises",
+	if self.money > bet:
+		transfer_money(game1, self, game1.previousbet - self.potinvest, True)
+		transfer_money(game1, self, bet, True)
+		game1.previousbet += bet
+		game1.lastbet = bet
+		game1.turn = not game1.turn
+		self.active = False
+		if prin:
+		    print "raises", bet
+		return bet
+	else:
+		transfer_money(game1, self, game1.previousbet - self.potinvest, True)
+		game1.previousbet += self.money
+		bet = self.money
+		game1.lastbet = self.money
+		transfer_money(game1, self, self.money, True)
+		game1.turn = not game1.turn
+		self.active = False
+		self.allin = True
+		if prin:
+		    print "raises All IN!"
+		return bet
         self.raise1(game1, minimum, minimum)
-        return False
+        return True
     def call(self, game1, prin=False):
         #print "calls",
         amount = 0

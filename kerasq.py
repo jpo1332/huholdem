@@ -75,7 +75,14 @@ class Agent:
         return result
 def current_state(thegame, thesession, player1, player2):
     prob = check_rnnprob(thegame.round, thegame, thegame.player1)
-    rounds = thegame.round / 4.0
+    if thegame.round == 0:
+	rounds = [0,0,0,1]
+    elif thegame.round == 1:
+	rounds = [ 0,0,1,0]
+    elif thegame.round == 2:
+	rounds = [0,1,0,0]
+    else:
+	rounds = [1,0,0,0]
     bb = thesession.bblind
     try:
         pot = float(thegame.pot) / float(player1.money)
@@ -96,13 +103,13 @@ def current_state(thegame, thesession, player1, player2):
     else:
         oppomove = [0, 0, 1]
 
-    return [prob, rounds, bb, pot, tocall, oppomove[0], oppomove[1], oppomove[2]]
+    return [prob, bb, pot, tocall, rounds[0], rounds[1], rounds[2], rounds[3], oppomove[0], oppomove[1], oppomove[2]]
 
-def betting_round(thegame, thesession, dqn, actions, lastmoney):
+def betting_round(thegame, thesession, dqn, actions, lastmoney, prints=False):
     previousstate = current_state(thegame, thesession, thesession.player1, thesession.secondplayer)
-    previousstate = np.reshape(previousstate, [1, 8])
+    previousstate = np.reshape(previousstate, [1, 11])
     state = current_state(thegame, thesession, thesession.player1, thesession.secondplayer)
-    state = np.reshape(state, [1, 8])
+    state = np.reshape(state, [1, 11])
     done = False
     reward = 0
     action = 1
@@ -110,20 +117,24 @@ def betting_round(thegame, thesession, dqn, actions, lastmoney):
     movedyet = 0
     while not thegame.check_endround(thesession):
         if thegame.turn:
+	    if prints:
+		print "Player 1:",
             move, _ = check_prob(thegame.round, thegame, thegame.player1)
             if move == 1:
-                thesession.player1.call(thegame)
+                thesession.player1.call(thegame, prin=prints)
             elif move == 2:
                 thesession.player1.raise1(thegame, 40, minimum_bet(thesession.blindamount, thegame.lastbet))
             else:
                 if thesession.player1.potinvest >= thegame.previousbet:
-                    thesession.player1.call(thegame)
+                    thesession.player1.call(thegame, prin=prints)
                 else:
-                    thesession.player1.fold(thegame)                       
+                    thesession.player1.fold(thegame, prin=prints)                       
 
         else:
+	    if prints:
+		print "Player 2:",
             state = current_state(thegame, thesession, thesession.player1, thesession.secondplayer)
-            state = np.reshape(state, [1, 8])
+            state = np.reshape(state, [1, 11])
             if thegame.round != 0 or movedyet != 0:                       
                 #state = current_state(thegame, thesession, thesession.player1, thesession.secondplayer)
                 reward = thesession.secondplayer.money - lastmoney
@@ -137,24 +148,24 @@ def betting_round(thegame, thesession, dqn, actions, lastmoney):
             move = action
             movedyet = 1
             if move == 1:
-                thesession.secondplayer.call(thegame)
+                thesession.secondplayer.call(thegame, prin=prints)
             elif move == 2:
                 minbet =  minimum_bet(thesession.blindamount, thegame.lastbet)
                 #print(state[0][0], thesession.secondplayer.money, int(((state[0][0] - .3) ** 2) * (abs(thesession.secondplayer.money - minbet))) * 4)
-                thesession.secondplayer.raise1(thegame, int(((state[0][0] - .3) ** 2) * (abs(thesession.secondplayer.money - minbet))) * 4, minbet)
+                thesession.secondplayer.raise1(thegame, int(((state[0][0] - .3) ** 2) * (abs(thesession.secondplayer.money - minbet))) * 4, minbet, prin=prints)
             else:
                 if thesession.secondplayer.potinvest >= thegame.previousbet:
-                    thesession.secondplayer.call(thegame)
+                    thesession.secondplayer.call(thegame, prin=prints)
                 else:
-                    thesession.secondplayer.fold(thegame)
+                    thesession.secondplayer.fold(thegame, prin=prints)
     return previousstate, action, lastmoney
     
 def main():
-    episodes = 500
-    state_size = 8
+    episodes = 1
+    state_size = 11
     dqn = Agent(state_size, 3)
     actions = []
-    prints = False
+    prints = True
     wins = 0
     handswon = 0
     handsplayed = 0
@@ -181,7 +192,7 @@ def main():
             if counter % 50 == 0:
                 print(thesession.player1.money, thesession.secondplayer.money)
             thegame.start_newround(thesession)
-            thegame.start(thesession)
+            thegame.start(thesession, prin=prints)
             previousstate = current_state(thegame, thesession, thesession.player1, thesession.secondplayer)
             #print(previousstate)
             previousstate = np.reshape(previousstate, [1, state_size])
@@ -193,7 +204,7 @@ def main():
             lastmoney = thesession.secondplayer.money
             movedyet = 0
 
-            previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney)
+            previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney, prints=prints)
             if thegame.check_endgame(thesession):
                 potsize = thegame.pot
                 handswon += thegame.end_game(thesession)
@@ -208,12 +219,12 @@ def main():
                 state = np.reshape(state, [1, state_size])
                 dqn.remember(previousstate, action, reward, state, done)
                 continue
-            thegame.flop()
+            thegame.flop(prin=prints)
             thegame.start_newround(thesession)
-            previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney)
+            previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney, prints=prints)
             if thegame.check_endgame(thesession):
                 potsize = thegame.pot
-                handswon += thegame.end_game(thesession)
+                handswon += thegame.end_game(thesession, prin=prints)
                 done = True
                 if thesession.secondplayer.money > lastmoney:
                     reward = potsize
@@ -224,12 +235,12 @@ def main():
                 state = np.reshape(state, [1, state_size])
                 dqn.remember(previousstate, action, reward, state, done)
                 continue
-            thegame.river()
+            thegame.river(prin=prints)
             thegame.start_newround(thesession)
-            previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney)
+            previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney, prints=prints)
             if thegame.check_endgame(thesession):
                 potsize = thegame.pot
-                handswon += thegame.end_game(thesession)
+                handswon += thegame.end_game(thesession, prin=prints)
                 done = True
                 if thesession.secondplayer.money > lastmoney:
                     reward = potsize
@@ -239,12 +250,12 @@ def main():
                 state = current_state(thegame, thesession, thesession.player1, thesession.secondplayer)
                 state = np.reshape(state, [1, state_size])
                 dqn.remember(previousstate, action, reward, state, done)
-            thegame.river()
+            thegame.river(prin=prints)
             thegame.start_newround(thesession)
-            previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney)
+            previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney, prints=prints)
             if thegame.check_endgame(thesession):
                 potsize = thegame.pot
-                handswon += thegame.end_game(thesession)
+                handswon += thegame.end_game(thesession, prin=prints)
                 done = True
                 if thesession.secondplayer.money > lastmoney:
                     reward = potsize
@@ -262,7 +273,7 @@ def main():
             wins += 1
         if i > 20 and i % 10 == 0:
             print("performance", dqn.performance())
-    print("actions:", actions[len(actions)-25:])
+    print("actions:", actions[len(actions)-50:])
     print("performance", dqn.performance())
     print("Games won:", wins, "Games played", episodes, "Handswon:", handswon, "handsplayed", handsplayed)
 main()
