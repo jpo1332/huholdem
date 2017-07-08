@@ -62,7 +62,7 @@ class Agent:
             self.model.fit(state, target_f, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
-    def performance(self):
+    '''def performance(self):
         temp = list(self.memory)
         if len(temp) < 75:
             temp = temp
@@ -72,7 +72,7 @@ class Agent:
         result = 0
         for x in temp:
             result += x[2]
-        return result
+        return result'''
 def current_state(thegame, thesession, player1, player2):
     prob = check_rnnprob(thegame.round, thegame, thegame.player1)
     if thegame.round == 0:
@@ -120,21 +120,23 @@ def betting_round(thegame, thesession, dqn, actions, lastmoney, prints=False):
 	    if prints:
 		print "Player 1:",
             move, _ = check_prob(thegame.round, thegame, thegame.player1)
+            move = 1
             if move == 1:
                 thesession.player1.call(thegame, prin=prints)
             elif move == 2:
-                thesession.player1.raise1(thegame, 40, minimum_bet(thesession.blindamount, thegame.lastbet))
+                bet = thesession.player1.raise1(thegame, 40, 40, prin=prints)
+                if bet:
+                    thesession.secondplayer.active = True
             else:
                 if thesession.player1.potinvest >= thegame.previousbet:
                     thesession.player1.call(thegame, prin=prints)
                 else:
-                    thesession.player1.fold(thegame, prin=prints)                       
+                    thesession.player1.fold(thegame, prin=prints)
 
         else:
-	    if prints:
-		print "Player 2:",
             state = current_state(thegame, thesession, thesession.player1, thesession.secondplayer)
             state = np.reshape(state, [1, 11])
+            
             if thegame.round != 0 or movedyet != 0:                       
                 #state = current_state(thegame, thesession, thesession.player1, thesession.secondplayer)
                 reward = thesession.secondplayer.money - lastmoney
@@ -144,6 +146,11 @@ def betting_round(thegame, thesession, dqn, actions, lastmoney, prints=False):
             movedyet = 1
             action = dqn.act(state)
             previousstate = copy.copy(state)
+            
+            if prints:
+                print state[0][0], dqn.model.predict(state), action
+		print "Player 2:",
+		
             actions.append(action)
             move = action
             movedyet = 1
@@ -152,23 +159,27 @@ def betting_round(thegame, thesession, dqn, actions, lastmoney, prints=False):
             elif move == 2:
                 minbet =  minimum_bet(thesession.blindamount, thegame.lastbet)
                 #print(state[0][0], thesession.secondplayer.money, int(((state[0][0] - .3) ** 2) * (abs(thesession.secondplayer.money - minbet))) * 4)
-                thesession.secondplayer.raise1(thegame, int(((state[0][0] - .3) ** 2) * (abs(thesession.secondplayer.money - minbet))) * 4, minbet, prin=prints)
+                bet = thesession.secondplayer.raise1(thegame, int(((state[0][0] - .3) ** 2) * (abs(thesession.secondplayer.money - minbet))) * 4, minbet, prin=prints)
+                if bet:
+                    thesession.player1.active = True
             else:
                 if thesession.secondplayer.potinvest >= thegame.previousbet:
                     thesession.secondplayer.call(thegame, prin=prints)
                 else:
                     thesession.secondplayer.fold(thegame, prin=prints)
+    #print (thesession.player1.potinvest, thesession.secondplayer.potinvest)
     return previousstate, action, lastmoney
     
 def main():
-    episodes = 1
+    episodes = 31
     state_size = 11
     dqn = Agent(state_size, 3)
     actions = []
-    prints = True
+    prints = False
     wins = 0
     handswon = 0
     handsplayed = 0
+    performance = deque(maxlen=5)
     for i in range(episodes):
         thesession = session()
         counter = 0
@@ -220,7 +231,7 @@ def main():
                 dqn.remember(previousstate, action, reward, state, done)
                 continue
             thegame.flop(prin=prints)
-            thegame.start_newround(thesession)
+            thegame.start_newround(thesession, prin=prints)
             previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney, prints=prints)
             if thegame.check_endgame(thesession):
                 potsize = thegame.pot
@@ -236,7 +247,7 @@ def main():
                 dqn.remember(previousstate, action, reward, state, done)
                 continue
             thegame.river(prin=prints)
-            thegame.start_newround(thesession)
+            thegame.start_newround(thesession, prin=prints)
             previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney, prints=prints)
             if thegame.check_endgame(thesession):
                 potsize = thegame.pot
@@ -250,8 +261,9 @@ def main():
                 state = current_state(thegame, thesession, thesession.player1, thesession.secondplayer)
                 state = np.reshape(state, [1, state_size])
                 dqn.remember(previousstate, action, reward, state, done)
+                continue
             thegame.river(prin=prints)
-            thegame.start_newround(thesession)
+            thegame.start_newround(thesession, prin=prints)
             previousstate, action, lastmoney = betting_round(thegame, thesession, dqn, actions, lastmoney, prints=prints)
             if thegame.check_endgame(thesession):
                 potsize = thegame.pot
@@ -270,11 +282,14 @@ def main():
                 print("break")
                 break
         if thesession.secondplayer.money > 0:
+            performance.append(400)
             wins += 1
+        else:
+            performance.append(-400) 
         if i > 20 and i % 10 == 0:
-            print("performance", dqn.performance())
+            print("performance", sum(performance))
     print("actions:", actions[len(actions)-50:])
-    print("performance", dqn.performance())
+    print("performance", sum(performance))
     print("Games won:", wins, "Games played", episodes, "Handswon:", handswon, "handsplayed", handsplayed)
 main()
                     
