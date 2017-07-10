@@ -162,11 +162,13 @@ def play_game(agent, runs, prints=False):
     return wins
 
 def eval_genomes(genomes, config):
+    counter = 0
     for genome_id, genome in genomes:
-        print(genome_id)
+        if counter % 10 == 0:
+            print(genome_id)
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         genome.fitness = play_game(net, 50)
-
+        counter += 1
 
 def run(config_file):
     # Load configuration.
@@ -175,8 +177,8 @@ def run(config_file):
                          config_file)
 
     # Create the population, which is the top-level object for a NEAT run.
-    p = neat.Population(config)
-
+    #p = neat.Population(config)
+    p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-44')
     # Add a stdout reporter to show progress in the terminal.
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
@@ -203,7 +205,7 @@ def run(config_file):
 
     #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-4')
     #p.run(eval_genomes, 10)
-
+    stats.save()
 
 if __name__ == '__main__':
     # Determine path to configuration file. This path manipulation is

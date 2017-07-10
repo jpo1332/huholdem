@@ -6,7 +6,7 @@ import math
 import timeit
 import sys
 import ast
-sys.path[0:0] = ['/Users/JackOHara/Desktop/code/Pythonprograms/Poker/poker2']
+sys.path[0:0] = ['/Users/JackOHara/Desktop/code/Pythonprograms/Poker/huholdem']
 from pokergamehead import *
 
 def make_hand(card1, card2, suited, deck, scoretype, scorelevel, turn):
@@ -154,7 +154,7 @@ def main():
                 if a == b and c == 1:
                     continue
                 categories += 1
-                for d in range(200):
+                for d in range(100):
                     #astart = timeit.default_timer()
                     thegame = game(thesession)
                     thegame.player1.cards.append(card(1, a))
@@ -283,14 +283,20 @@ def main():
     for x in flop:
             if flop[counter][6] != 0:
                 y = flop[counter][:5] + [float(flop[counter][5]) / flop[counter][6]] + [flop[counter][6]]
-                wr1.writerows([y])
+            else:
+                y = flop[counter]
+            wr1.writerows([y])
             if turn[counter][6] != 0:
                 y = turn[counter][:5] + [float(turn[counter][5]) / turn[counter][6]] + [turn[counter][6]]
-                wr2.writerows([y])
+            else:
+                y = turn[counter]
+            wr2.writerows([y])
             if river[counter][6] != 0:
                 y = river[counter][:5] + [float(river[counter][5]) / river[counter][6]] + [river[counter][6]]
-                wr3.writerows([y])
-            counter += 1                                                                                               
+            else:
+                y = river[counter]
+            wr3.writerows([y])
+            counter += 1
     endtime = timeit.default_timer() - starttime
     print(river[:50])
     print(len(river))
