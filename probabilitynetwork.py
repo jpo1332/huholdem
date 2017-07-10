@@ -41,7 +41,7 @@ def index_inlistslow(a, b, c, handtype, handlevel, thelist):
 
 def append_parameters(open1, flop, turn, river, all, card1, card2, community, riverfile, index,  win):
     if riverfile[index][6] > 100000:
-        if random.randint(1, 20) % 11 == 0:
+        if random.randint(1, 12) == 1:
             parameters = card_vector(card1, card2, community, 0)
             all.append(parameters + [win])
             open1.append(parameters + [win])
@@ -57,7 +57,23 @@ def append_parameters(open1, flop, turn, river, all, card1, card2, community, ri
             all.append(parameters + [win])
             river.append(parameters + [win])
     elif riverfile[index][6] > 20000:
-        if random.randint(1, 9) %  3 == 0:
+        if random.randint(1, 6) == 1:
+            parameters = card_vector(card1, card2, community, 0)
+            all.append(parameters + [win])
+            open1.append(parameters + [win])
+
+            parameters = card_vector(card1, card2, community, 1)
+            all.append(parameters + [win])
+            flop.append(parameters + [win])
+
+            parameters = card_vector(card1, card2, community, 2)
+            all.append(parameters + [win])
+            turn.append(parameters + [win])
+            parameters = card_vector(card1, card2, community, 3)
+            all.append(parameters + [win])
+            river.append(parameters + [win])
+    elif riverfile[index][6] > 3000:
+        if random.randint(1, 2) == 1:
             parameters = card_vector(card1, card2, community, 0)
             all.append(parameters + [win])
             open1.append(parameters + [win])
@@ -131,7 +147,7 @@ def main():
                     continue
                 categories += 1
                 counter = 0
-                for d in range(10):
+                for d in range(1000):
                     # astart = timeit.default_timer()
                     thegame = game(thesession)
                     suit = random.randint(0, 3)
@@ -191,65 +207,44 @@ def main():
                                       thegame.secondplayer.cards[1], thegame.community.cards, riverprobs, index, team2)
 
                     # ctime += timeit.default_timer() - cstart
-    '''
-    resultFile1 = open("rnnflop.csv", 'w')
+    resultFile4 = open("traindata/nnalltrain.csv", 'w')
+    wr4 = csv.writer(resultFile4, dialect='excel')
+    resultFile6 = open("traindata/nnallvalid.csv", 'w')
+    wr6 = csv.writer(resultFile6, dialect='excel')
+    resultFile7 = open("traindata/nnalltest.csv", 'w')
+    wr7 = csv.writer(resultFile7, dialect='excel')
+    resultFile1 = open("traindata/nnflop.csv", 'w')
     wr1 = csv.writer(resultFile1, dialect='excel')
-    resultFile2 = open("rnnturn.csv", 'w')
+    resultFile2 = open("traindata/nnturn.csv", 'w')
     wr2 = csv.writer(resultFile2, dialect='excel')
-    resultFile3 = open("rnnriver.csv", 'w')
+    resultFile3 = open("traindata/nnriver.csv", 'w')
     wr3 = csv.writer(resultFile3, dialect='excel')
-    if len(sys.argv) > 1:
-        counter = 0
-        for x in flop1:
-            index = index_inlist(flop1[counter][0], flop1[counter][1], flop1[counter][2], flop1[counter][3], flop1[counter][4], flop)
-            if flop[index][6] != 0:
-                newtotal = flop[index][6] + flop1[counter][6]
-                newprop = float(flop1[counter][5]) * (flop1[counter][6] / float(newtotal)) + (flop[index][5] / float
-                    (flop[index][6])) * (flop[index][6] / float(newtotal))
-                newsum = newtotal * newprop
-                flop[index] = flop[index][:5] + [newsum, newtotal]
-            else:
-                flop[index] = flop[index][:5] + [flop1[counter][5] * flop1[counter][6], flop1[counter][6]]
-            counter += 1
+    resultFile5 = open("traindata/nnopen.csv", 'w')
+    wr5 = csv.writer(resultFile5, dialect='excel')
 
-        counter = 0
-        for x in turn1:
-            index = index_inlist(turn1[counter][0], turn1[counter][1], turn1[counter][2], turn1[counter][3], turn1[counter][4], turn)
-            if turn[index][6] != 0:
-                newtotal = turn[index][6] + turn1[counter][6]
-                newprop = float(turn1[counter][5]) * (turn1[counter][6] / float(newtotal)) + (turn[index][5] / float
-                    (turn[index][6])) * (turn[index][6] / float(newtotal))
-                newsum = newtotal * newprop
-                turn[index] = turn[index][:5] + [newsum, newtotal]
-            else:
-                turn[index] = turn[index][:5] + [turn1[counter][5] * turn1[counter][6], turn1[counter][6]]
-            counter += 1
-
-        counter = 0
-        for x in river1:
-            index = index_inlist(river1[counter][0], river1[counter][1], river1[counter][2], river1[counter][3], river1[counter][4], river)
-            if river[index][6] != 0:
-                newtotal = river[index][6] + river1[counter][6]
-                newprop = float(river1[counter][5]) * (river1[counter][6] / float(newtotal)) + (river[index][5] / float
-                    (river[index][6])) * (river[index][6] / float(newtotal))
-                newsum = newtotal * newprop
-                river[index] = river[index][:5] + [newsum, newtotal]
-            else:
-                river[index] = river[index][:5] + [river1[counter][5] * river1[counter][6], river1[counter][6]]
-            counter += 1
     counter = 0
     for x in flop:
-        if flop[counter][6] != 0:
-            y = flop[counter][:5] + [float(flop[counter][5]) / flop[counter][6]] + [flop[counter][6]]
-            wr1.writerows([y])
-        if turn[counter][6] != 0:
-            y = turn[counter][:5] + [float(turn[counter][5]) / turn[counter][6]] + [turn[counter][6]]
-            wr2.writerows([y])
-        if river[counter][6] != 0:
-            y = river[counter][:5] + [float(river[counter][5]) / river[counter][6]] + [river[counter][6]]
-            wr3.writerows([y])
+        y = flop[counter]
+        wr1.writerows([y])
+
+        y = open1[counter]
+        wr5.writerows([y])
+
+        y = turn[counter]
+        wr2.writerows([y])
+
+        y = river[counter]
+        wr4.writerows([y])
         counter += 1
-    '''
+
+    for x in all:
+        test = random.randint(1, 10)
+        if test == 1 or test == 2:
+            wr6.writerows([x])
+        elif test == 3:
+            wr7.writerows([x])
+        else:
+            wr4.writerows([x])
     print "length", len(all), len(all[0])
     print "len open", len(open1), "len river", len(river)
     print "first 5", all[:5]
